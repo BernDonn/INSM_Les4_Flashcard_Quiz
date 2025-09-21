@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>INSM – Les 4 Quiz (Strategische opties)</title>
+  <style>
+    :root{
+      --bg:#0b1020; --card:#111731; --muted:#8aa1ff; --text:#e8ecff;
+      --c1:#5B8CFF; /* groep 1 */
+      --c2:#2EC4B6; /* groep 2 */
+      --c3:#FF9F1C; /* groep 3 */
+      --c4:#EF476F; /* groep 4 */
+      --ok:#10b981; --warn:#f59e0b; --bad:#ef4444;
+    }
+    html,body{height:100%;}
+    body{margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Helvetica,Arial,sans-serif; background:linear-gradient(135deg,#0b1020 0%, #0d1430 100%); color:var(--text);} 
+    .wrap{max-width:1000px; margin:0 auto; padding:24px;}
+    h1{font-size: clamp(1.3rem, 2vw + 1rem, 2rem); margin:0 0 12px 0;}
+    p{color:#c9d4ff;}
+    .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px;}
+    .card{background:var(--card); border-radius:18px; padding:18px; box-shadow:0 10px 25px rgba(0,0,0,.35);}    
+    .btn{display:inline-flex; align-items:center; justify-content:center; min-height:46px; border-radius:999px; padding:10px 14px; font-weight:600; letter-spacing:.2px; border:2px solid transparent; cursor:pointer; transition:transform .08s ease, filter .2s ease, box-shadow .2s ease;}
+    .btn:hover{transform:translateY(-1px); filter:brightness(1.05);}    
+    .btn:active{transform:translateY(0);}    
+    .pill{display:inline-block; font-size:.8rem; padding:.2rem .55rem; border-radius:999px; opacity:.9}
+    .c1{background:color-mix(in oklab, var(--c1) 92%, white 8%); color:#0a1225;}
+    .c2{background:color-mix(in oklab, var(--c2) 88%, white 12%); color:#001315;}
+    .c3{background:color-mix(in oklab, var(--c3) 90%, white 10%); color:#2b0f00;}
+    .c4{background:color-mix(in oklab, var(--c4) 88%, white 12%); color:#2d0010;}
+
+    .legend{display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:4px 0 18px}
+    .legend span{display:flex; align-items:center; gap:8px}
+
+    .qbox{background:var(--card); border-radius:18px; padding:20px; margin-top:16px;}
+    .qhead{display:flex; align-items:center; justify-content:space-between; gap:12px;}
+    .qtitle{font-weight:700;}
+    .status{font-size:.9rem; color:#c6d0ff}
+    .choices{display:grid; gap:10px; margin-top:14px;}
+    .choice{border:1.5px solid rgba(255,255,255,.08); border-radius:14px; padding:12px 14px; cursor:pointer; background:#0e1531;}
+    .choice:hover{background:#111a3d}
+    .choice.correct{border-color:var(--ok); background:rgba(16,185,129,.12)}
+    .choice.wrong{border-color:var(--bad); background:rgba(239,68,68,.12)}
+
+    .actions{display:flex; gap:10px; flex-wrap:wrap; margin-top:14px}
+    .ghost{background:transparent; color:#cbd6ff; border-color:#2a376b}
+    .primary{background:#5B8CFF; color:#07112b}
+
+    .hidden{display:none !important}
+    .small{font-size:.9rem; color:#c6d0ff}
+    .muted{color:#a6b4ff}
+    .score{font-weight:800}
+    .footer{opacity:.7; font-size:.9rem; margin-top:20px}
+    code{background:#0e1531; padding:.2rem .4rem; border-radius:6px}
+    .split{display:grid; grid-template-columns:1fr; gap:14px}
+    @media (min-width: 880px){ .split{grid-template-columns: 1.2fr .8fr} }
+
+    .banner{background:#13204a; border:1px solid #2a376b; border-radius:12px; padding:10px 12px; margin-bottom:12px; color:#cfe1ff}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>INSM – Les 4 Quiz <span class="pill c1">Strategische opties</span></h1>
+    <p class="muted">Kies een bedrijf hieronder. Elke set bevat <strong><span id="qCount">meerdere</span> vragen</strong> gebaseerd op les 4: <em>lange-termijndoelstellingen (SMART), Porter, Ansoff, integratie, diversificatie, waardeketen, benchmarking, prioriteringsmatrix, Build–Borrow–Buy, M&A en defensieve strategieën</em>. Antwoordvolgorde wordt per vraag willekeurig gezet.</p>
+
+    <div class="legend small">
+      <span><span class="pill c1">AMS Groep 1</span> Uber · AirBnB · CBRE · Tony's Chocolonely</span>
+      <span><span class="pill c2">AMS Groep 2</span> Heineken · Moncler · Amazon · Disney</span>
+      <span><span class="pill c3">GRO Groep 1</span> Marriott · Booking · Unibail Rodamco</span>
+      <span><span class="pill c4">GRO Groep 4</span> Tesla · EasyToys</span>
+    </div>
+
+    <div class="grid" id="companyButtons"></div>
+
+    <div id="quiz" class="hidden">
+      <div class="split">
+        <div>
+          <div class="qbox">
+            <div class="qhead">
+              <div>
+                <div id="companyName" class="qtitle">Bedrijf</div>
+                <div id="qProgress" class="status">Vraag 1/…</div>
+              </div>
+              <div id="colorPill" class="pill">Groep</div>
+            </div>
+            <div id="qText" style="margin-top:10px; font-size:1.05rem; line-height:1.4"></div>
+            <div id="choices" class="choices"></div>
+            <div class="actions">
+              <button id="nextBtn" class="btn primary">Volgende vraag ▶</button>
+              <button id="skipBtn" class="btn ghost">Sla over</button>
+              <button id="resetBtn" class="btn ghost">Andere case kiezen</button>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="card">
+            <div style="font-weight:700">Uitleg & diagram</div>
+            <div id="explain" class="small" style="margin-top:8px">Kies eerst een antwoord…</div>
+            <div id="viz" style="margin-top:10px"></div>
+          </div>
+          <div class="card" style="margin-top:12px">
+            <div class="small">Score</div>
+            <div class="score" id="scoreLine">0/0 (0%)</div>
+          </div>
+          <div class="card" style="margin-top:12px">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+              <div style="font-weight:700">Begrippen (altijd zichtbaar)</div>
+              <button id="showAllGlossary" class="btn ghost" style="min-height:32px;padding:6px 10px">Toon alle</button>
+            </div>
+            <div id="glossary" class="small" style="margin-top:8px"></div>
+          </div>
+          <div class="banner" id="testBanner" style="display:none"></div>
+        </div>
+      </div>
+
+      <div id="result" class="card hidden" style="margin-top:14px">
+        <div style="font-weight:800; font-size:1.1rem">Eindresultaat</div>
+        <div id="resultText" class="small" style="margin-top:6px"></div>
+        <div class="actions" style="margin-top:10px">
+          <button class="btn primary" onclick="restart()">Opnieuw met dit bedrijf</button>
+          <button class="btn ghost" onclick="backToCompanies()">Naar bedrijven</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">Les 4 thema’s: SMART-doelen, generieke strategieën (Porter), Ansoff, integratie & diversificatie, waardeketen & benchmarking, prioritering, Build–Borrow–Buy, M&A, defensief. © voor onderwijsgebruik.</div>
+  </div>
+
+<script>
+// ====== HULP: util ======
+const rnd = (min,max)=>Math.floor(Math.random()*(max-min+1))+min;
+function shuffle(arr){
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;
+}
+
+// ====== GLOSSARY: afkortingen (altijd zichtbaar)
+const GLOSSARY = {
+  DACH: "Duitsland, Oostenrijk, Zwitserland",
+  APAC: "Asia-Pacific (Azië & Oceanië)",
+  CEE: "Centraal- en Oost‑Europa",
+  MENA: "Midden‑Oosten & Noord‑Afrika",
+  LatAm: "Latijns‑Amerika",
+  ARPU: "Average Revenue Per User (gemiddelde omzet per gebruiker)",
+  RevPAR: "Revenue per Available Room (omzet per beschikbare kamer)",
+  ASP: "Average Selling Price (gemiddelde verkoopprijs)",
+  OTA: "Online Travel Agency",
+  DTC: "Direct‑to‑Consumer",
+  IP: "Intellectual Property (intellectueel eigendom)",
+  ESG: "Environmental, Social & Governance",
+  KPI: "Key Performance Indicator",
+  NPS: "Net Promoter Score (aanbevelingsscore)"
+};
+
+// ====== CONFIG: bedrijven & context ======
+const GROUPS = { c1:{label:"AMS Groep 1", class:"c1"}, c2:{label:"AMS Groep 2", class:"c2"}, c3:{label:"GRO Groep 1", class:"c3"}, c4:{label:"GRO Groep 4", class:"c4"} };
+
+const COMPANIES = [
+  {name:"Uber", group:"c1", industry:"ride‑hailing & delivery platform", regionExp:"DACH", competitor:"Lyft", valueLever:"Matching & dispatch (Operations)", kpi:"Take rate (%)", buildNeed:"dynamische prijs- en vraagprognose AI", buildChoice:"Borrow", defensive:"afbouwen verlieslatende steden (desinvestering)"},
+  {name:"AirBnB", group:"c1", industry:"home‑sharing marketplace", regionExp:"Gulf-regio", competitor:"Booking.com", valueLever:"Trust & onboarding (Service/Platform)", kpi:"Nights booked", buildNeed:"veiligheids- & ID‑verificatie", buildChoice:"Borrow", defensive:"tijdelijk pauzeren in streng gereguleerde steden (herstructurering)"},
+  {name:"CBRE", group:"c1", industry:"real‑estate services", regionExp:"Nordics", competitor:"JLL", valueLever:"Advisory & property management (Service)", kpi:"Fee margin", buildNeed:"dataplatform voor ESG‑benchmarking", buildChoice:"Build", defensive:"verkoop niet‑kernactiviteiten (desinvestering)"},
+  {name:"Tony's Chocolonely", group:"c1", industry:"FMCG chocolade (fair trade)", regionExp:"DACH", competitor:"Lindt", valueLever:"Duurzame inkoop cacao (Inkoop)", kpi:"Brutomarge per reep", buildNeed:"traceerbaarheid supply‑chain", buildChoice:"Build", defensive:"afbouwen niet‑rendabele smaken (herstructurering)"},
+  {name:"Heineken", group:"c2", industry:"bierbrouwer & distributie", regionExp:"Sub‑Sahara Afrika", competitor:"AB InBev", valueLever:"Brouwen & route‑to‑market (Operations/Outbound)", kpi:"Marktaandeel (%)", buildNeed:"premium 0.0 innovatie", buildChoice:"Build", defensive:"sluiten inefficiënte brouwerijen (herstructurering)"},
+  {name:"Moncler", group:"c2", industry:"luxury outerwear", regionExp:"APAC", competitor:"Canada Goose", valueLever:"Design & merk (Tech/R&D + Marketing)", kpi:"ASP (gem. verkoopprijs)", buildNeed:"direct‑to‑consumer e‑commerce", buildChoice:"Build", defensive:"afstoten outlet‑kanalen (desinvestering)"},
+  {name:"Amazon", group:"c2", industry:"e‑commerce & cloud", regionExp:"CEE", competitor:"Walmart", valueLever:"Fulfilment & last‑mile (Outbound)", kpi:"Fulfilment cost per order", buildNeed:"groene last‑mile partners", buildChoice:"Borrow", defensive:"sluiten verlieslatende private labels (desinvestering)"},
+  {name:"Disney", group:"c2", industry:"content & experiences", regionExp:"India", competitor:"Netflix", valueLever:"Content creatie & IP (Tech/R&D)", kpi:"ARPU streaming", buildNeed:"regionale contentproductie", buildChoice:"Buy", defensive:"herstructureren lineaire TV (herstructurering)"},
+  {name:"Marriott", group:"c3", industry:"hospitality (franchise/managed)", regionExp:"MENA", competitor:"Hilton", valueLever:"Franchise & revenue management (Marketing/Systems)", kpi:"RevPAR", buildNeed:"dynamische prijs‑engine", buildChoice:"Build", defensive:"afstoten underperforming leases (desinvestering)"},
+  {name:"Booking", group:"c3", industry:"OTA", regionExp:"LatAm", competitor:"Expedia", valueLever:"Performance marketing & conversion (Marketing)", kpi:"Take rate / conversie", buildNeed:"loyaliteitsnetwerk", buildChoice:"Build", defensive:"verlagen paid‑traffic in onrendabele markten (herstructurering)"},
+  {name:"Unibail Rodamco", group:"c3", industry:"shopping centres", regionExp:"CEE", competitor:"Klepierre", valueLever:"Tenant mix & footfall (Operations/Marketing)", kpi:"Occupancy rate", buildNeed:"digitale footfall‑analytics", buildChoice:"Borrow", defensive:"verkopen niet‑kernmalls (desinvestering)"},
+  {name:"Tesla", group:"c4", industry:"EV & energy", regionExp:"India", competitor:"BYD", valueLever:"Battery & manufacturing (Operations/R&D)", kpi:"Gross margin per vehicle", buildNeed:"batterijtechnologie/licenties", buildChoice:"Buy", defensive:"pauzeren zwakke trims (herstructurering)"},
+  {name:"EasyToys", group:"c4", industry:"e‑commerce (adult)", regionExp:"DACH", competitor:"Lovehoney", valueLever:"Discrete logistiek & compliance (Outbound/Legal)", kpi:"Repeat purchase rate", buildNeed:"marktplaats‑uitrol in EU", buildChoice:"Borrow", defensive:"exiten in landen met restricties (desinvestering)"},
+];
+
+// ====== VRAAG-TEMPLATES ======
+const TEMPLATES = [
+  (c)=>({
+    q:`SMART-doel voor ${c.name}: welke is het meest SMART (2–5 jaar)?`,
+    choices:[
+      `“Groei in ${c.regionExp}.”`,
+      `“Verhoog marktaandeel in ${c.regionExp} met 3 procentpunten binnen 24 maanden.”`,
+      `“Word marktleider zo snel mogelijk.”`
+    ],
+    correct:1,
+    explain:`Les 4 vereist kwantitatief, begrijpelijk, uitdagend, verenigbaar en haalbaar; inclusief tijdsgebondenheid (2–5 jaar).`
+  }),
+  (c)=>({
+    q:`Ansoff: ${c.name} opent ${c.regionExp} zonder nieuw product. Welke groeirichting?`,
+    choices:[`Productontwikkeling`,`Marktpenetratie`,`Marktontwikkeling`],
+    correct:2,
+    explain:`Nieuwe regio/segment met bestaand aanbod = marktontwikkeling.`,
+    diagram:'ansoff',
+    highlight:'market-development'
+  }),
+  (c)=>({
+    q:`Verbeterd product in bestaande markt → welke Ansoff-richting?`,
+    choices:[`Marktpenetratie`,`Productontwikkeling`,`Diversificatie`],
+    correct:1,
+    explain:`Productontwikkeling: je verbetert/verniewt het product voor dezelfde markt (Ansoff).`,
+    diagram:'ansoff-mini',
+    highlight:'product-development'
+  }),
+  (c)=>({
+    q:`Integratie: ${c.name} neemt concurrent ${c.competitor} over. Wat is dit?`,
+    choices:[`Voorwaartse integratie`,`Achterwaartse integratie`,`Horizontale integratie`],
+    correct:2,
+    explain:`Concurrent op hetzelfde niveau in de keten = horizontale integratie.`
+  }),
+  (c)=>({
+    q:`Diversificatie: ${c.name} start een activiteit buiten de kern (${c.industry}). Wat is NIET‑gerelateerd?`,
+    choices:[
+      `Uitbreiding dicht bij kern (synergie in keten)`,
+      `Volledig andere business zonder waardeketen‑overlap`,
+      `Bundels/line‑extensions van het huidige aanbod`
+    ],
+    correct:1,
+    explain:`Niet‑gerelateerd = beperkte cross‑business synergie.`
+  }),
+  (c)=>({
+    q:`Waardeketen: waar zit waarschijnlijk de grootste waarde/kostenhefboom voor ${c.name}?`,
+    choices:[`${c.valueLever}`,`Algemene administratie (infrastructuur)`, `Random kleine kostenpost`],
+    correct:0,
+    explain:`Focus op activiteiten met grootste hefboom voor waarde/kosten in de keten.`
+  }),
+  (c)=>({
+    q:`Benchmarking: wat is een zinnige eerste KPI voor ${c.name}?`,
+    choices:[`${c.kpi}`,`Aantal LinkedIn‑volgers`,`Kantooroppervlak (m²)`],
+    correct:0,
+    explain:`Kies KPI’s die waarde/kosten/kwaliteit/tijd van kernactiviteiten meten.`
+  }),
+  (c)=>({
+    q:`Prioriteringsmatrix: initiatief met hoge waarde‑impact én groot prestatiedeficit bij ${c.name} →`,
+    choices:[`Nice‑to‑fix`,`Topprioriteit`,`Observeren/monitoren`],
+    correct:1,
+    explain:`Hoog‑hoog = Topprioriteit.`
+  }),
+  (c)=>({
+    q:`Build–Borrow–Buy: ${c.name} heeft ${c.buildNeed} nodig. Wat ligt het meest voor de hand?`,
+    choices:[`Build`,`Borrow`,`Buy`],
+    correct:(c.buildChoice==="Build"?0:(c.buildChoice==="Borrow"?1:2)),
+    explain:`Keuze hangt af van snelheid, controle, capability‑fit, kapitaal en risico. Hier past ‘${c.buildChoice}’.`
+  }),
+  (c)=>({
+    q:`M&A valkuil: welke is het meest reëel om te bewaken bij ${c.name}?`,
+    choices:[`Integratie‑issues & cultuurclash`,`Meer vergaderruimtes nodig`,`Leuk logo kiezen`],
+    correct:0,
+    explain:`Veel deals falen op integratie/synergie/cultuur en schuldenlast, niet op cosmetische zaken.`
+  }),
+  (c)=>({
+    q:`Keuzerichtlijn: capability ontbreekt en snelheid is cruciaal bij ${c.name}.`,
+    choices:[`Build`,`Borrow/Buy`,`Wachten tot het organically groeit`],
+    correct:1,
+    explain:`Als snelheid nodig is en capability ontbreekt → Borrow/Buy.`
+  }),
+  (c)=>({
+    q:`Defensieve strategie voor ${c.name}: wat past het beste bij “${c.defensive}”?`,
+    choices:[`Herstructurering`,`Desinvestering`,`Liquidatie`],
+    correct:(/desinvestering/.test(c.defensive)?1:0),
+    explain:`Defensief = herstructureren, desinvesteren of liquidatie; kies wat bij de omschrijving past.`
+  }),
+  (c)=>({
+    q:`Porter: welke past het minst bij ${c.name} gegeven de kern (${c.industry})?`,
+    choices:[`Kostenleiderschap`,`Differentiatie`,`Focus op ultraklein niche zonder schaal`],
+    correct:2,
+    explain:`Een te smalle focus kan schaalvoordelen en netwerk‑/merkvoordelen ondermijnen.`
+  }),
+  (c)=>({
+    q:`Porter-model: wat staat op de X- en Y-as van het vierkwadrantenmodel?`,
+    choices:[
+      `X: basis van voordeel (kosten–differentiatie); Y: concurrentieomvang (smal–breed)`,
+      `X: omzetgroei; Y: winstgevendheid`,
+      `X: marktaandeel; Y: klanttevredenheid`
+    ],
+    correct:0,
+    explain:`In Porter’s raster staat de X-as voor de basis van voordeel (kostenleiderschap ↔ differentiatie) en de Y-as voor de scope/bereik (smal ↔ breed).`,
+    diagram:'porter'
+  }),
+  (c)=>({
+    q:`Porter waardeketen: tot welke categorie hoort "${c.valueLever}" vooral?`,
+    choices:[`Primaire activiteiten`,`Ondersteunende activiteiten`,`Geen van beide`],
+    correct:0,
+    explain:`${c.valueLever} raakt direct de primaire waardestroom (inkoop, operations, outbound, marketing & sales, service).`,
+    diagram:'vchain',
+    highlight:'primary'
+  }),
+  (c)=>({
+    q:`Porter waardeketen: welke ondersteunende activiteit versterkt "${c.valueLever}" het meest?`,
+    choices:[`Technologie/R&D`,`Infrastructuur (fin/HR/IT)`,`Inkoop ondersteunend`],
+    correct:0,
+    explain:`Technologie/R&D is vaak de grootste hefboom om primaire processen productiever/kwalitatiever te maken.`,
+    diagram:'vchain',
+    highlight:'tech'
+  })
+];
+
+function quadrantExtrasFor(company){
+  const extra=[];
+  if(company.name==='Amazon'){
+    extra.push({
+      q:`Porter-kwadrant: waar plaats je Walmart?`,
+      choices:[`Kosten-gebaseerd / Breed`,`Differentiatie / Breed`,`Differentiatie / Smal`,`Kosten / Smal`],
+      correct:0,
+      explain:`Walmart positioneert zich als kostenleider met brede marktdekking: kosten-gebaseerd/breed.`,
+      diagram:'porter',
+      highlight:'cost-broad'
+    });
+  }
+  if(company.name==='Disney'){
+    extra.push({
+      q:`Porter-kwadrant: waar plaats je Apple?`,
+      choices:[`Kosten / Breed`,`Differentiatie / Breed`,`Differentiatie / Smal`,`Kosten / Smal`],
+      correct:1,
+      explain:`Apple streeft naar brede differentiatie (merk & ecosysteem) met brede doelgroep: differentiatie/breed.`,
+      diagram:'porter',
+      highlight:'diff-broad'
+    });
+  }
+  if(company.name==='Moncler'){
+    extra.push({
+      q:`Porter-kwadrant: waar plaats je Ferrari?`,
+      choices:[`Kosten / Breed`,`Differentiatie / Breed`,`Differentiatie / Smal`,`Kosten / Smal`],
+      correct:2,
+      explain:`Ferrari is een luxe niche-speler: differentiatie/smal (focusdifferentiatie).`,
+      diagram:'porter',
+      highlight:'diff-narrow'
+    });
+  }
+  return extra;
+}
+
+function buildQuestionSet(company){
+  const base = TEMPLATES.map(t=>t(company));
+  return base.concat(quadrantExtrasFor(company));
+}
+
+// ====== UI rendering ======
+const buttonsEl = document.getElementById('companyButtons');
+const quizEl = document.getElementById('quiz');
+const qText = document.getElementById('qText');
+const choicesEl = document.getElementById('choices');
+const nextBtn = document.getElementById('nextBtn');
+const skipBtn = document.getElementById('skipBtn');
+const resetBtn = document.getElementById('resetBtn');
+const qProgress = document.getElementById('qProgress');
+const explainEl = document.getElementById('explain');
+const vizEl = document.getElementById('viz');
+const resultCard = document.getElementById('result');
+const resultText = document.getElementById('resultText');
+const scoreLine = document.getElementById('scoreLine');
+const companyName = document.getElementById('companyName');
+const colorPill = document.getElementById('colorPill');
+const testBanner = document.getElementById('testBanner');
+const glossaryEl = document.getElementById('glossary');
+const qCountEl = document.getElementById('qCount');
+const showAllGlossaryBtn = document.getElementById('showAllGlossary');
+
+let state = { company:null, questions:[], order:[], i:0, score:0, seen:0, shuffledChoices:[], answered:false, showAllGlossary:false };
+
+function renderButtons(){
+  buttonsEl.innerHTML = '';
+  COMPANIES.forEach(c=>{
+    const group = GROUPS[c.group];
+    const btn = document.createElement('button');
+    btn.className = `btn ${group.class}`;
+    btn.textContent = c.name;
+    btn.title = `${c.industry}`;
+    btn.onclick = ()=>startQuiz(c);
+    buttonsEl.appendChild(btn);
+  });
+}
+
+function startQuiz(company){
+  state.company = company;
+  state.questions = buildQuestionSet(company);
+  state.order = shuffle(Array.from(state.questions.keys()));
+  state.i = 0; state.score = 0; state.seen = 0; state.answered=false;
+  quizEl.classList.remove('hidden');
+  document.querySelector('.grid').classList.add('hidden');
+  document.querySelector('.legend').classList.add('hidden');
+  companyName.textContent = company.name;
+  colorPill.textContent = GROUPS[company.group].label;
+  colorPill.className = `pill ${GROUPS[company.group].class}`;
+  renderQuestion();
+  updateScore();
+  resultCard.classList.add('hidden');
+}
+
+function renderQuestion(){
+  const idx = state.order[state.i];
+  const q = state.questions[idx];
+  qText.textContent = q.q;
+  qProgress.textContent = `Vraag ${state.i+1}/${state.questions.length}`;
+  explainEl.textContent = 'Kies een antwoord…';
+  if(vizEl) vizEl.innerHTML = '';
+  state.answered=false;
+
+  const enumerated = q.choices.map((t,i)=>({t, i}));
+  const sh = shuffle(enumerated);
+  state.shuffledChoices = sh;
+
+  choicesEl.innerHTML = '';
+  sh.forEach((cObj, pos)=>{
+    const div = document.createElement('div');
+    div.className='choice';
+    div.textContent = cObj.t;
+    div.onclick = ()=> selectAnswer(pos);
+    choicesEl.appendChild(div);
+  });
+
+  updateGlossaryOnQuestion(q);
+
+  nextBtn.onclick = next; skipBtn.onclick = skip; resetBtn.onclick = backToCompanies;
+}
+
+function selectAnswer(pos){
+  if(state.answered) return;
+  state.answered=true; state.seen++;
+  const idx = state.order[state.i];
+  const q = state.questions[idx];
+  const mappedIndex = state.shuffledChoices[pos].i;
+  const isCorrect = (mappedIndex === q.correct);
+
+  [...choicesEl.children].forEach((el, i)=>{
+    const orig = state.shuffledChoices[i].i;
+    if(orig===q.correct) el.classList.add('correct');
+    if(i===pos && !isCorrect) el.classList.add('wrong');
+    el.style.pointerEvents='none';
+  });
+
+  if(isCorrect) state.score++;
+  explainEl.textContent = q.explain;
+
+  if(vizEl){
+    if(q.diagram==='porter'){
+      vizEl.innerHTML = renderPorterSVG(q.highlight||null);
+    } else if(q.diagram==='ansoff'){
+      vizEl.innerHTML = renderAnsoffSVG(q.highlight||null);
+    } else if(q.diagram==='ansoff-mini'){
+      vizEl.innerHTML = renderAnsoffMiniSVG(q.highlight||null);
+    } else if(q.diagram==='vchain'){
+      vizEl.innerHTML = renderValueChainSVG(q.highlight||null);
+    } else {
+      vizEl.innerHTML='';
+    }
+  }
+
+  updateGlossaryAfterAnswer(q);
+  updateScore();
+}
+
+function updateScore(){
+  const pct = state.seen ? Math.round((state.score/state.seen)*100) : 0;
+  scoreLine.textContent = `${state.score}/${state.seen} (${pct}%)`;
+}
+
+function next(){
+  if(state.i < state.questions.length-1){ state.i++; renderQuestion(); }
+  else { finish(); }
+}
+function skip(){
+  if(state.i < state.questions.length-1){ state.i++; renderQuestion(); }
+  else { finish(); }
+}
+
+function finish(){
+  resultCard.classList.remove('hidden');
+  const pct = Math.round((state.score/Math.max(1,state.seen))*100);
+  resultText.innerHTML = `Je scoorde <strong>${state.score}</strong> van de <strong>${state.seen}</strong> beantwoorde vragen (${pct}%).`;
+}
+
+function restart(){ startQuiz(state.company); }
+function backToCompanies(){
+  quizEl.classList.add('hidden');
+  document.querySelector('.grid').classList.remove('hidden');
+  document.querySelector('.legend').classList.remove('hidden');
+}
+
+// ===== Diagram helpers =====
+function renderPorterSVG(highlight){
+  const map={ 'cost-broad':'qa', 'diff-broad':'qb', 'diff-narrow':'qd', 'cost-narrow':'qc' };
+  const h=map[highlight]||'';
+  return `
+  <svg viewBox="0 0 420 260" width="100%" style="max-width:420px;border-radius:12px;background:#0e1531">
+    <defs>
+      <style>
+        .b{fill:#0b122a;stroke:#39406b;stroke-width:1.2}
+        .hl{fill:rgba(91,140,255,.25);stroke:#5B8CFF;stroke-width:2}
+        .t{fill:#c9d4ff;font:600 12px system-ui}
+        .ax{fill:#8aa1ff;font:600 12px system-ui}
+      </style>
+    </defs>
+    <rect x="40" y="20" width="340" height="200" class="b"/>
+    <rect id="qa" x="40" y="20" width="170" height="100" class="${h==='qa'?'hl':'b'}"/>
+    <rect id="qb" x="210" y="20" width="170" height="100" class="${h==='qb'?'hl':'b'}"/>
+    <rect id="qc" x="40" y="120" width="170" height="100" class="${h==='qc'?'hl':'b'}"/>
+    <rect id="qd" x="210" y="120" width="170" height="100" class="${h==='qd'?'hl':'b'}"/>
+    <text x="125" y="75" class="t" text-anchor="middle">Kosten / Breed</text>
+    <text x="295" y="75" class="t" text-anchor="middle">Differentiatie / Breed</text>
+    <text x="125" y="175" class="t" text-anchor="middle">Kosten / Smal</text>
+    <text x="295" y="175" class="t" text-anchor="middle">Differentiatie / Smal</text>
+    <text x="210" y="240" class="ax" text-anchor="middle">Kosten ↔ Differentiatie</text>
+    <g transform="translate(10,120) rotate(-90)">
+      <text x="0" y="0" class="ax" text-anchor="middle">Bereik (Smal ↔ Breed)</text>
+    </g>
+  </svg>`;
+}
+
+function renderAnsoffSVG(highlight){
+  const map={ 'market-penetration':'q1','product-development':'q2','market-development':'q3','diversification':'q4' };
+  const h=map[highlight]||'';
+  return `
+  <svg viewBox="0 0 420 260" width="100%" style="max-width:420px;border-radius:12px;background:#0e1531">
+    <defs>
+      <style>
+        .b{fill:#0b122a;stroke:#39406b;stroke-width:1.2}
+        .hl{fill:rgba(46,196,182,.25);stroke:#2EC4B6;stroke-width:2}
+        .t{fill:#c9d4ff;font:600 12px system-ui}
+        .ax{fill:#8aa1ff;font:600 12px system-ui}
+      </style>
+    </defs>
+    <rect x="40" y="20" width="340" height="200" class="b"/>
+    <rect id="q1" x="40" y="20" width="170" height="100" class="${h==='q1'?'hl':'b'}"/>
+    <rect id="q2" x="210" y="20" width="170" height="100" class="${h==='q2'?'hl':'b'}"/>
+    <rect id="q3" x="40" y="120" width="170" height="100" class="${h==='q3'?'hl':'b'}"/>
+    <rect id="q4" x="210" y="120" width="170" height="100" class="${h==='q4'?'hl':'b'}"/>
+    <text x="125" y="75" class="t" text-anchor="middle">Marktpenetratie</text>
+    <text x="295" y="75" class="t" text-anchor="middle">Productontwikkeling</text>
+    <text x="125" y="175" class="t" text-anchor="middle">Marktontwikkeling</text>
+    <text x="295" y="175" class="t" text-anchor="middle">Diversificatie</text>
+    <text x="210" y="240" class="ax" text-anchor="middle">Product (Bestaand ↔ Nieuw)</text>
+    <g transform="translate(10,120) rotate(-90)">
+      <text x="0" y="0" class="ax" text-anchor="middle">Markt (Bestaand ↔ Nieuw)</text>
+    </g>
+  </svg>`;
+}
+
+function renderAnsoffMiniSVG(highlight){
+  const map={'market-penetration':'q1','product-development':'q2','market-development':'q3','diversification':'q4'};
+  const h=map[highlight]||'';
+  return `
+  <svg viewBox="0 0 220 140" width="100%" style="max-width:280px;border-radius:10px;background:#0e1531">
+    <defs>
+      <style>
+        .b{fill:#0b122a;stroke:#39406b;stroke-width:1}
+        .hl{fill:rgba(46,196,182,.25);stroke:#2EC4B6;stroke-width:1.5}
+        .t{fill:#c9d4ff;font:600 9px system-ui}
+        .ax{fill:#8aa1ff;font:600 9px system-ui}
+      </style>
+    </defs>
+    <rect x="30" y="10" width="160" height="100" class="b"/>
+    <rect id="q1" x="30" y="10" width="80" height="50" class="${h==='q1'?'hl':'b'}"/>
+    <rect id="q2" x="110" y="10" width="80" height="50" class="${h==='q2'?'hl':'b'}"/>
+    <rect id="q3" x="30" y="60" width="80" height="50" class="${h==='q3'?'hl':'b'}"/>
+    <rect id="q4" x="110" y="60" width="80" height="50" class="${h==='q4'?'hl':'b'}"/>
+    <text x="70" y="40" class="t" text-anchor="middle">Penetratie</text>
+    <text x="150" y="40" class="t" text-anchor="middle">Prod. ontw.</text>
+    <text x="70" y="90" class="t" text-anchor="middle">Marktontw.</text>
+    <text x="150" y="90" class="t" text-anchor="middle">Diversificatie</text>
+    <text x="110" y="130" class="ax" text-anchor="middle">Product</text>
+    <g transform="translate(8,60) rotate(-90)">
+      <text x="0" y="0" class="ax" text-anchor="middle">Markt</text>
+    </g>
+  </svg>`;
+}
+
+function renderValueChainSVG(highlight){
+  const h = highlight || '';
+  return `
+  <svg viewBox="0 0 520 200" width="100%" style="max-width:520px;border-radius:12px;background:#0e1531">
+    <defs>
+      <style>
+        .b{fill:#0b122a;stroke:#39406b;stroke-width:1.2}
+        .hl{fill:rgba(255,159,28,.25);stroke:#FF9F1C;stroke-width:2}
+        .t{fill:#c9d4ff;font:600 12px system-ui}
+      </style>
+    </defs>
+    <rect x="20" y="120" width="480" height="60" class="${h==='primary'?'hl':'b'}"/>
+    <g>
+      <rect x="20" y="120" width="96" height="60" class="${h==='primary'?'hl':'b'}"/>
+      <rect x="116" y="120" width="96" height="60" class="${h==='primary'?'hl':'b'}"/>
+      <rect x="212" y="120" width="96" height="60" class="${h==='primary'?'hl':'b'}"/>
+      <rect x="308" y="120" width="96" height="60" class="${h==='primary'?'hl':'b'}"/>
+      <rect x="404" y="120" width="96" height="60" class="${h==='primary'?'hl':'b'}"/>
+      <text x="68" y="155" class="t" text-anchor="middle">Inbound</text>
+      <text x="164" y="155" class="t" text-anchor="middle">Operations</text>
+      <text x="260" y="155" class="t" text-anchor="middle">Outbound</text>
+      <text x="356" y="155" class="t" text-anchor="middle">Mkt & Sales</text>
+      <text x="452" y="155" class="t" text-anchor="middle">Service</text>
+    </g>
+    <g>
+      <rect x="20" y="20" width="480" height="24" class="${h==='infra'?'hl':'b'}"/>
+      <text x="260" y="36" class="t" text-anchor="middle">Infrastructuur</text>
+      <rect x="20" y="44" width="480" height="24" class="${h==='hr'?'hl':'b'}"/>
+      <text x="260" y="60" class="t" text-anchor="middle">HRM</text>
+      <rect x="20" y="68" width="480" height="24" class="${h==='tech'?'hl':'b'}"/>
+      <text x="260" y="84" class="t" text-anchor="middle">Technologie / R&D</text>
+      <rect x="20" y="92" width="480" height="24" class="${h==='procurement'?'hl':'b'}"/>
+      <text x="260" y="108" class="t" text-anchor="middle">Inkoop (ondersteunend)</text>
+    </g>
+  </svg>`;
+}
+
+// ===== Helpers: glossary =====
+function collectGlossary(texts){
+  const map = new Map();
+  const keys = Object.keys(GLOSSARY);
+  if(!keys.length) return [];
+  const esc = s=>s.replace(/[-\/\\^$*+?.()|[\]{}]/g,'\\$&');
+  const re = new RegExp('\\b(' + keys.map(esc).join('|') + ')\\b','g');
+  const blob = texts.join(' ');
+  blob.replace(re,(m)=>{ map.set(m, GLOSSARY[m]); return m; });
+  return Array.from(map.entries());
+}
+function renderGlossaryList(entries){
+  return entries.length
+    ? '<ul style="margin:6px 0 0 18px">'+entries.map(([k,v])=>`<li><strong>${k}</strong>: ${v}</li>`).join('')+'</ul>'
+    : '<span class="muted">Geen afkortingen in deze vraag.</span>';
+}
+function glossaryAllEntries(){ return Object.entries(GLOSSARY); }
+function updateGlossary(q, all=false){
+  if(!glossaryEl) return;
+  if(all){ glossaryEl.innerHTML = renderGlossaryList(glossaryAllEntries()); return; }
+  const texts = [q.q, ...(q.choices||[]), q.explain||'', state.company?.regionExp||'', state.company?.kpi||'', state.company?.valueLever||''];
+  const found = collectGlossary(texts);
+  glossaryEl.innerHTML = renderGlossaryList(found);
+}
+function updateGlossaryButton(){ if(!showAllGlossaryBtn) return; showAllGlossaryBtn.textContent = (state.showAllGlossary? 'Toon relevante' : 'Toon alle'); }
+function updateGlossaryUI(q){ updateGlossary(q, !!state.showAllGlossary); updateGlossaryButton(); }
+function updateGlossaryAfterAnswer(q){ updateGlossaryUI(q); }
+function updateGlossaryOnQuestion(q){ updateGlossaryUI(q); }
+function updateGlossaryOnCompany(q){ updateGlossaryUI(q); }
+function updateGlossaryOnToggle(q){ state.showAllGlossary = !state.showAllGlossary; updateGlossaryUI(q); }
+function updateGlossaryOnInit(){ updateGlossaryButton(); }
+
+// ====== INIT + RUNTIME TESTS ======
+function selfTest(){
+  const errs=[];
+  TEMPLATES.forEach((t, idx)=>{
+    try{
+      const q=t(COMPANIES[0]);
+      if(!q || !q.q || !Array.isArray(q.choices) || typeof q.correct!=='number') errs.push(`Vraag ${idx}: onvolledig`);
+      if(q && Array.isArray(q.choices) && (q.correct<0 || q.correct>=q.choices.length)) errs.push(`Vraag ${idx}: 'correct' buiten bereik`);
+    }catch(e){ errs.push(`Vraag ${idx}: throw -> ${e.message}`); }
+  });
+  if(COMPANIES.length!==13) errs.push(`Bedrijven: verwacht 13, gevonden ${COMPANIES.length}`);
+  const missingGroup = COMPANIES.find(c=>!GROUPS[c.group]);
+  if(missingGroup) errs.push(`Onbekende groep voor ${missingGroup.name}`);
+  const need=['DACH','APAC','CEE','MENA','LatAm','ARPU','RevPAR','ASP','OTA','DTC','IP','ESG','KPI','NPS'];
+  const miss = need.filter(k=>!(k in GLOSSARY));
+  if(miss.length) errs.push('Glossary mist: '+miss.join(','));
+  if(!document.getElementById('showAllGlossary')) errs.push('Glossary-knop ontbreekt');
+  const testBanner = document.getElementById('testBanner');
+  if(errs.length){
+    testBanner.style.display='block';
+    testBanner.textContent = `⚠️ Zelftest: ${errs.length} probleem(en) – open console voor details.`;
+    console.warn('Zelftest problemen:', errs);
+  } else {
+    testBanner.style.display='block';
+    testBanner.textContent = `✅ Zelftest: alle checks OK. Vragen per set: ${TEMPLATES.length}.`;
+  }
+}
+
+function init(){
+  const qCountEl = document.getElementById('qCount');
+  if(qCountEl) qCountEl.textContent = TEMPLATES.length;
+  renderButtons();
+  selfTest();
+  const showAllGlossaryBtn = document.getElementById('showAllGlossary');
+  if(showAllGlossaryBtn){
+    showAllGlossaryBtn.addEventListener('click', ()=>{
+      const current = state.questions[state.order[state.i]] || {q:'',choices:[],explain:''};
+      updateGlossaryOnToggle(current);
+    });
+  }
+  updateGlossaryOnInit();
+}
+
+window.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
